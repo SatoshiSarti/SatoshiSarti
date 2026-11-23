@@ -1,5 +1,4 @@
-.venv/
 __pycache__/
 *.pyc
 _preview.html
-tools/portrait_*.png
+_debug.html

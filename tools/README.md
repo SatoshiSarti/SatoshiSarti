@@ -1,59 +1,40 @@
 # Profile card
 
 ```bash
-python3 refresh.py             # product metrics and contributions -> card.json
-python3 tools/build_card.py    # card.json + the files below -> both SVGs
+GH_TOKEN=$(gh auth token) python3 refresh.py   # contribution calendar -> card.json
+python3 tools/build_card.py                    # card.json + language_stats.json -> card.svg
 ```
 
-`refresh.py` and `tools/build_card.py` use only Python's standard library and
-call no AI service. The scheduled workflow runs both every six hours with the
-workflow's own token; there is no stored secret. The time in the card's top
-right corner is the last refresh that succeeded.
+Both use only Python's standard library and call no AI service. The scheduled
+workflow runs them every six hours with the workflow's own token; there is no
+stored secret.
 
 ## What each part is
 
-- **MyFutureSelf** figures come from the public snapshot at
-  `https://kayahickin.com/api/profile-metrics`. A snapshot older than 48 hours
-  is rejected and the card keeps its last values. Downloads, paid
-  subscriptions and ratings are exact counts; ARR keeps the source's display
-  precision.
-- **Downloads chart** draws the last 90 days of `metrics_history.json` from a
-  zero baseline, one point per day, appended on each refresh. Days with no
-  point are joined by a straight line. The series before this repository
-  existed was copied from the same file in
-  [kayahickindev/kayahickindev](https://github.com/kayahickindev/kayahickindev).
-- **Systems** and **Stack** are written by hand in `tools/build_card.py`. Each
-  line describes how a private system works and was checked against its
-  source; change a line only after checking it the same way.
-- **Languages** and the **repository count** cover private repositories, which
-  the workflow's token cannot read. Refresh them on a signed-in machine with
+- **Journal page.** The date is the last day in the contribution calendar and
+  `DAY n` counts from the day this account was created. The circled number is
+  the total on the profile's contribution graph for the last twelve months,
+  private contributions included. Peak day, active days and longest run are
+  computed from the same calendar. Much of that volume is an automated sync,
+  which is why the card shows no lines-of-code or pull-request totals: they
+  would overstate the code written by hand.
+- **Red-pen plot.** Contributions per week for the last 26 weeks, from zero.
+- **Repositories and languages** cover private repositories, which the
+  workflow's token cannot read. Refresh them on a signed-in machine with
   `python3 tools/languages.py`, then rebuild and commit. `language_stats.json`
   records the date it was last counted.
-- **Contributions** is the number on the profile's contribution graph, private
-  contributions included. Much of that volume is an automated sync, which is
-  why the card shows no lines-of-code or pull-request totals: they would
-  overstate the code written by hand.
-
-## Portrait
-
-`tools/scanline.py` turns `tools/headshot.png` into 95 horizontal lines whose
-weight follows the photo's luminance (`portrait_dark.json`,
-`portrait_light.json`). It needs `pip install -r tools/requirements.txt`;
-nothing else does.
-
-```bash
-python3 tools/scanline.py --preview
-```
+- **Case cards** are written by hand in `tools/build_card.py`. Each describes
+  how a private system works and was checked against its source; change one
+  only after checking it the same way.
 
 ## Design notes
 
-- The card is 1000 by 612. GitHub shows it through an `<img>`, so there is no
-  script and no web font: type is the viewer's system monospace and sans, and
-  nothing depends on exact character widths except the stack chips, which the
-  builder asserts fit their column.
-- Motion is CSS inside the SVG: the portrait draws in line by line behind a
-  beam, the chart line draws itself, and the two live dots pulse. All of it
-  stops under `prefers-reduced-motion`, and a viewer that does not animate
-  sees the finished card.
-- Language colours belong to the language, not its rank. The three per theme
-  were checked for colour-blind separation and contrast against each surface.
+- The card is 920 by 520 and dark in both GitHub themes. GitHub shows it
+  through an `<img>`, so there is no script and no web font. Type falls back
+  from American Typewriter to Courier New, and from Bradley Hand to Segoe
+  Print, so the layout avoids anything that depends on exact text width.
+- Motion is CSS inside the SVG: the pen circle, the plot and the string draw
+  themselves, the stamps land, rain falls, and a few bats cross on load and
+  every ten seconds after (`BAT_CYCLE`, `BATS`). Under
+  `prefers-reduced-motion` the bats are removed and everything else is still.
+  A viewer that does not animate sees the finished board without bats.

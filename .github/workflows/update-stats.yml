@@ -24,11 +24,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 -u refresh.py
-      - name: Rebuild the cards
+      - name: Rebuild the card
         run: python3 tools/build_card.py
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dark_mode.svg light_mode.svg card.json metrics_history.json
+          git add card.svg card.json
           git diff --cached --quiet || (git commit -m "chore: refresh profile stats" && git push)
