@@ -25,7 +25,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 -u refresh.py
       - name: Rebuild the cards
-        run: python3 tools/build_svg.py
+        run: python3 tools/build_card.py
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"

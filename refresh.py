@@ -9,7 +9,7 @@ The refresh is all or nothing. A missing token, an unreachable feed or a
 snapshot older than PROFILE_SITE_MAX_AGE_HOURS leaves card.json untouched and
 exits 1, so the card never mixes fresh and stale numbers.
 
-Stdlib only. Run tools/build_svg.py afterwards to redraw the cards.
+Stdlib only. Run tools/build_card.py afterwards to redraw the cards.
 """
 import json
 import os

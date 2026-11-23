@@ -1,6 +1,6 @@
 """Recount the language bar and the repository count. Run on a signed-in Mac.
 
-    python3 tools/languages.py && python3 tools/build_svg.py
+    python3 tools/languages.py && python3 tools/build_card.py
 
 Most of the code is in private repositories, which the scheduled workflow's
 token cannot see, so this part of the card is refreshed by hand through the

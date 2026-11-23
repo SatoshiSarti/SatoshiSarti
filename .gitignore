@@ -1,6 +1,5 @@
 .venv/
 __pycache__/
 *.pyc
-dark_mode.png
-light_mode.png
 _preview.html
+tools/portrait_*.png
