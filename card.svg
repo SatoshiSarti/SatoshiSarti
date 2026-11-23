@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <svg xmlns="http://www.w3.org/2000/svg" width="920" height="520" viewBox="0 0 920 520" role="img">
-<title>Giancarlo Sarti's case board: 665 contributions in twelve months and four deployed systems</title>
+<title>Giancarlo Sarti's case board: 667 contributions in twelve months and four deployed systems</title>
 <style>
 text {font-family: 'American Typewriter','Courier New',Courier,monospace; white-space: pre;}
 .hand {font-family: 'Bradley Hand','Segoe Print','Marker Felt','Comic Sans MS',cursive;}
@@ -75,7 +75,7 @@ text {font-family: 'American Typewriter','Courier New',Courier,monospace; white-
 <path d="M78 34V490" stroke="#3b070c"/>
 <text x="92" y="66" font-size="15.5" letter-spacing="1.5" fill="#ece6dd">MONDAY, NOVEMBER 23RD.</text>
 <text x="92" y="90" font-size="12" letter-spacing="1.5" fill="#948e88">DAY 259.  GIANCARLO SARTI.</text>
-<text x="96" y="166" font-size="62" font-weight="700" letter-spacing="1" fill="#ece6dd">665</text>
+<text x="96" y="166" font-size="62" font-weight="700" letter-spacing="1" fill="#ece6dd">667</text>
 <path class="ink draw" pathLength="1" style="animation-delay:.5s" stroke-width="2.6" filter="url(#rough)" d="M92 148c-6-34 34-52 78-52s86 14 84 46-48 46-96 44-72-18-66-46c5-24 44-40 92-38"/>
 <text x="268" y="128" class="hand" font-size="16" fill="#e5132c" transform="rotate(-6 268 128)">contributions,</text>
 <text x="276" y="148" class="hand" font-size="16" fill="#e5132c" transform="rotate(-6 276 148)">12 months</text>
@@ -104,7 +104,7 @@ text {font-family: 'American Typewriter','Courier New',Courier,monospace; white-
 <path d="M336.3 368V438" stroke="#2a251f" stroke-width="0.6"/>
 <path d="M358.2 368V438" stroke="#2a251f" stroke-width="0.6"/>
 <path d="M380.0 368V438" stroke="#2a251f" stroke-width="0.6"/>
-<polyline class="ink draw" pathLength="1" style="animation-delay:1.1s" points="96.0,436.7 107.4,438.0 118.7,438.0 130.1,438.0 141.4,438.0 152.8,438.0 164.2,438.0 175.5,436.1 186.9,438.0 198.2,435.4 209.6,436.7 221.0,437.4 232.3,436.1 243.7,434.1 255.0,427.6 266.4,428.9 277.8,430.2 289.1,432.2 300.5,419.2 311.8,376.4 323.2,368.0 334.6,384.2 345.9,369.9 357.3,393.9 368.6,388.1 380.0,426.3" stroke-width="2.2" filter="url(#rough)"/>
+<polyline class="ink draw" pathLength="1" style="animation-delay:1.1s" points="96.0,436.7 107.4,438.0 118.7,438.0 130.1,438.0 141.4,438.0 152.8,438.0 164.2,438.0 175.5,436.1 186.9,438.0 198.2,435.4 209.6,436.7 221.0,437.4 232.3,436.1 243.7,434.1 255.0,427.6 266.4,428.9 277.8,430.2 289.1,432.2 300.5,419.2 311.8,376.4 323.2,368.0 334.6,384.2 345.9,369.9 357.3,393.9 368.6,388.1 380.0,425.0" stroke-width="2.2" filter="url(#rough)"/>
 <text x="303.2" y="384" class="hand" font-size="14" text-anchor="end" fill="#e5132c">108 in a week</text>
 <text x="96" y="455" font-size="9.5" letter-spacing="1.3" fill="#4d4845">26 WEEKS</text>
 <text x="380" y="455" font-size="9.5" letter-spacing="1.3" text-anchor="end" fill="#4d4845">NOW</text>
