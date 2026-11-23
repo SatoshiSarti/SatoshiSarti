@@ -23,9 +23,12 @@ stored secret.
   workflow's token cannot read. Refresh them on a signed-in machine with
   `python3 tools/languages.py`, then rebuild and commit. `language_stats.json`
   records the date it was last counted.
-- **Case cards** are written by hand in `tools/build_card.py`. Each describes
-  how a private system works and was checked against its source; change one
-  only after checking it the same way.
+- **Case cards** are written by hand in `tools/build_card.py` (`SYSTEMS`). Each
+  has a codename, the system's real name in the header, one plain line saying
+  what it does, and its pipeline. Each describes a private system and was
+  checked against its source; change one only after checking it the same way.
+  The builder refuses a line longer than 52 characters, the width of a card in
+  the fallback typeface.
 
 ## Design notes
 
@@ -34,7 +37,9 @@ stored secret.
   from American Typewriter to Courier New, and from Bradley Hand to Segoe
   Print, so the layout avoids anything that depends on exact text width.
 - Motion is CSS inside the SVG: the pen circle, the plot and the string draw
-  themselves, the stamps land, rain falls, and a few bats cross on load and
-  every ten seconds after (`BAT_CYCLE`, `BATS`). Under
-  `prefers-reduced-motion` the bats are removed and everything else is still.
-  A viewer that does not animate sees the finished board without bats.
+  themselves, the stamps land, rain falls, and a loose group of bats crosses
+  on load and every ten seconds after (`BAT_CYCLE`, `BAT_COUNT`, `BAT_SEED`).
+  Each bat swaps between three wing positions and flies its own uneven path,
+  turned toward where it is heading. Under `prefers-reduced-motion` the bats
+  are removed and everything else is still. A viewer that does not animate
+  sees the finished board without bats.

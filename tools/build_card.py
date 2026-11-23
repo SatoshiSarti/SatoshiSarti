@@ -2,7 +2,7 @@
 
 A typewritten journal page on the left (the numbers), four case cards pinned
 on the right (the systems), red string between them, rain over everything and
-a few bats that cross the board on load and every ten seconds after.
+a loose group of bats that crosses the board on load and every ten seconds.
 
 Inputs, none fetched here:
   card.json             contribution calendar (refresh.py)
@@ -13,6 +13,8 @@ no web font: motion is CSS inside the file and type is whatever typewriter,
 handwriting and sans faces the viewer's system has.
 """
 import json
+import math
+import random
 from datetime import date
 from pathlib import Path
 
@@ -26,24 +28,39 @@ SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 RED, RED_DEEP = "#e5132c", "#3b070c"
 BONE, ASH, DIM = "#ece6dd", "#948e88", "#4d4845"
 
-# name, runtime, pipeline. Each line describes how a private system works and
-# was checked against its source; change one only after checking it again.
+# codename, real name, runtime, what it does, pipeline.
+# Each card describes a private system and was checked against its source;
+# change one only after checking it again. The "what it does" and pipeline
+# lines must stay under 52 characters: in Courier New, the fallback face, that
+# is the width of a card.
 SYSTEMS = (
-    ("imessage-agent", "NODE", ("chat.db", "claude -p", "osascript", "iMessage")),
-    ("mention-tracker", "PYTHON", ("yt-dlp", "whisper.cpp", "Vision OCR", "rule engine")),
-    ("deadman-switch", "SHELL", ("Mac mini", "gist heartbeat", "Actions cron", "alert")),
-    ("sync-score", "PYTHON", ("ffmpeg", "frame diff", "audio envelope", "xcorr lag")),
+    ("THE SIGNAL", "imessage-agent", "NODE",
+     "Text it from an iPhone. A Mac mini agent answers.",
+     ("chat.db poll", "claude -p", "osascript", "iMessage")),
+    ("WIRETAP", "mention-tracker", "PYTHON",
+     "Transcribes creator videos, flags app mentions.",
+     ("yt-dlp", "whisper.cpp", "Vision OCR", "rule engine")),
+    ("NIGHT WATCH", "deadman-switch", "SHELL",
+     "Off-box alarm when a server goes silent.",
+     ("Mac mini", "gist heartbeat", "Actions cron", "alerts")),
+    ("LIE DETECTOR", "sync-score", "PYTHON",
+     "Scores if an AI video's lips match its voice.",
+     ("ffmpeg", "frame diff", "audio envelope", "xcorr lag")),
 )
+LINE_LIMIT = 52
 TREND_WEEKS = 26
-BAT_CYCLE = 10          # seconds between passes
-# start (x, y), end (x, y), size, delay in seconds, seconds to cross, bob in px
-BATS = (
-    ((-70, 330), (990, 150), 1.00, 0.35, 3.3, 13),
-    ((-70, 410), (990, 250), 0.72, 0.70, 3.7, 10),
-    ((-70, 250), (990, 60), 0.58, 0.55, 3.0, 9),
-    ((-70, 470), (990, 330), 0.86, 1.10, 3.9, 12),
-    ((-70, 190), (990, 20), 0.46, 1.35, 3.4, 8),
-)
+
+BAT_CYCLE = 10      # seconds between passes
+BAT_COUNT = 7
+BAT_SEED = 5        # fixes the flight paths, so a rebuild does not reshuffle them
+# One bat seen from below, head up, in three wing positions that are swapped
+# fast: raised, level, swept down. Thin arms, scalloped membrane, no outline.
+BAT_BODY = "M-2.2-4.4L-1.9-8.6L-.5-5.5L.5-5.5L1.9-8.6L2.2-4.4C3-2 2.8 3 0 7.6C-2.8 3-3-2-2.2-4.4Z"
+BAT_WINGS = {
+    "u": "M-1.6-1L-12-14L-28-19C-25-14-22.6-10.6-21.6-6.4C-18.6-8.6-16-8.2-14-4.2C-11.2-6.2-9-5.2-7-1.2C-5-2.2-3-1.2-1.6 2Z",
+    "m": "M-1.6-1L-13-7.4L-31-5C-27-3-24.6 0-23.6 4.2C-20.4 1-17.4 1.2-15.4 5.2C-12.2 2-9.2 2.2-7.2 6C-5 3.2-3 3-1.6 3Z",
+    "d": "M-1.6 0L-13-3.4L-26 10C-22 8.6-20 10.4-19 14.6C-16 10.4-13.8 10.4-12 13.6C-10 8.6-8 7.4-6 9.6C-5 6-3 4-1.6 3Z",
+}
 
 
 def esc(text):
@@ -82,20 +99,62 @@ LANGUAGES = [(entry["name"], entry["bytes"] / _bytes)
              for entry in LANGUAGE_STATS["languages"] if entry["bytes"] / _bytes >= 0.005]
 
 
-def style():
-    bats = []
-    for index, ((x0, y0), (x1, y1), size, delay, cross, bob) in enumerate(BATS):
+def bat_markup():
+    out = []
+    for key, wing in BAT_WINGS.items():
+        both = f'<path d="{wing}"/><path d="{wing}" transform="scale(-1 1)"/>'
+        # A dark red copy set just up and left of the black one reads as the
+        # lamp catching the leading edge.
+        out.append(f'<g class="w{key}"><g transform="translate(-.5 -.8)" fill="#571118">{both}</g>'
+                   f'<g fill="#030101">{both}</g></g>')
+    out.append(f'<path d="{BAT_BODY}" fill="#030101"/>')
+    return "".join(out)
+
+
+def bats():
+    """CSS and markup for the bats.
+
+    Each one flies its own uneven path from the left edge to the right,
+    gaining height as it goes, and is turned most of the way toward where it
+    is heading so it banks into the path instead of sliding sideways. They are
+    invisible until their animation starts and between passes, so a viewer
+    that does not animate sees the board without them.
+    """
+    rnd = random.Random(BAT_SEED)
+    x0, x1 = -60, W + 60
+    css, svg = [], ['<g class="bats">']
+    for index in range(BAT_COUNT):
+        size = rnd.choice((0.6, 0.75, 0.9, 1.05, 1.25, 1.55))
+        cross = rnd.uniform(1.7, 2.7) * (0.85 if size > 1.2 else 1)
+        delay = 0.3 + rnd.uniform(0, 1.3)
+        y = rnd.uniform(40, H - 60)
+        climb = rnd.uniform(-170, -40)
+        points = [(0.0, y)]
+        for t in sorted(rnd.uniform(0.06, 0.94) for _ in range(6)):
+            points.append((t, y + climb * t + rnd.uniform(-34, 34)))
+        points.append((1.0, y + climb + rnd.uniform(-20, 20)))
         share = cross / BAT_CYCLE * 100
-        far = f"translate({x1}px, {y1}px) scale({size * 0.8:.2f})"
-        bats.append(
-            f".fly{index} {{animation: fly{index} {BAT_CYCLE}s linear {delay}s infinite;}}\n"
-            f"@keyframes fly{index} {{0% {{transform: translate({x0}px, {y0}px) scale({size}); opacity: 1;}} "
-            f"{share:.1f}% {{transform: {far}; opacity: 1;}} "
-            f"{share + 0.1:.1f}%, 100% {{transform: {far}; opacity: 0;}}}}\n"
-            f".bob{index} {{animation: bob{index} {0.7 + index * 0.09:.2f}s ease-in-out infinite alternate;}}\n"
-            f"@keyframes bob{index} {{from {{transform: translateY(-{bob}px) rotate(-7deg);}} "
-            f"to {{transform: translateY({bob}px) rotate(5deg);}}}}"
-        )
+        frames, pose = [], ""
+        for k, (t, py) in enumerate(points):
+            ahead, behind = points[min(k + 1, len(points) - 1)], points[max(k - 1, 0)]
+            slope = (ahead[1] - behind[1]) / max((ahead[0] - behind[0]) * (x1 - x0), 1)
+            pitch = max(-32, min(32, math.degrees(math.atan(slope))))
+            pose = (f"transform: translate({x0 + t * (x1 - x0):.0f}px, {py:.0f}px) "
+                    f"rotate({52 + pitch * 0.9:.0f}deg) scale({size});")
+            frames.append(f"{t * share:.2f}% {{{pose} opacity: 1;}}")
+        frames.append(f"{share + 0.1:.2f}%, 100% {{{pose} opacity: 0;}}")
+        css.append(f".bat{index} {{animation: bat{index} {BAT_CYCLE}s linear {delay:.2f}s infinite;}}\n"
+                   f"@keyframes bat{index} {{{' '.join(frames)}}}")
+        blur = ' filter="url(#bat-blur)"' if size > 1.3 else ""
+        svg.append(f'<g class="bat{index}" opacity="0"{blur}>{bat_markup()}</g>')
+    svg.append("</g>")
+    return "\n".join(css), svg
+
+
+BAT_CSS, BAT_SVG = bats()
+
+
+def style():
     return f"""<style>
 text {{font-family: {TYPE}; white-space: pre;}}
 .hand {{font-family: {HAND};}}
@@ -108,25 +167,18 @@ text {{font-family: {TYPE}; white-space: pre;}}
 @keyframes rain {{to {{transform: translate(-30px, 110px);}}}}
 .lamp {{animation: lamp 7s steps(1) infinite;}}
 @keyframes lamp {{0%, 90% {{opacity: 1;}} 92% {{opacity: 0.55;}} 94% {{opacity: 1;}} 97% {{opacity: 0.7;}}}}
-.wing {{transform-box: fill-box; transform-origin: 100% 45%; animation: flap 0.21s ease-in-out infinite alternate;}}
-@keyframes flap {{from {{transform: rotate(24deg) scaleX(0.82);}} to {{transform: rotate(-30deg) scaleX(1);}}}}
-{chr(10).join(bats)}
+.wu {{animation: wu .16s steps(1) infinite;}}
+@keyframes wu {{0% {{opacity: 1;}} 25%, 100% {{opacity: 0;}}}}
+.wm {{animation: wm .16s steps(1) infinite;}}
+@keyframes wm {{0% {{opacity: 0;}} 25% {{opacity: 1;}} 50% {{opacity: 0;}} 75% {{opacity: 1;}}}}
+.wd {{animation: wd .16s steps(1) infinite;}}
+@keyframes wd {{0%, 25% {{opacity: 0;}} 50% {{opacity: 1;}} 75%, 100% {{opacity: 0;}}}}
+{BAT_CSS}
 @media (prefers-reduced-motion: reduce) {{
-  .draw, .stamp, .rain, .lamp, .wing {{animation: none;}}
+  .draw, .stamp, .rain, .lamp {{animation: none;}}
   .bats {{display: none;}}
 }}
 </style>"""
-
-
-# One bat, drawn head-up. Each copy is written out in full rather than reused
-# through <use>, because not every browser animates inside a <use> copy.
-_WING = ("M-2 -1C-8 -10-19 -12-30 -6C-26 -4-24 -2-23 3C-20 0-17 0-15 4"
-         "C-12 1-9 1-7 5C-6 3-4 2-2 2Z")
-BAT = (f'<g fill="#050303" stroke="{RED}" stroke-width="0.9" stroke-linejoin="round">'
-       f'<path class="wing" d="{_WING}"/>'
-       f'<g transform="scale(-1 1)"><path class="wing" d="{_WING}"/></g>'
-       '<path d="M-2.6 -4L-2.2 -9L0 -5.4L2.2 -9L2.6 -4C3.6 -2 3.4 3 0 7C-3.4 3-3.6 -2-2.6 -4Z"/>'
-       "</g>")
 
 
 def defs(frame):
@@ -142,6 +194,7 @@ def defs(frame):
 </pattern>
 <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000" flood-opacity="0.8"/></filter>
 <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter>
+<filter id="bat-blur"><feGaussianBlur stdDeviation="0.9"/></filter>
 </defs>"""
 
 
@@ -203,32 +256,37 @@ def journal():
 
 
 def case_cards():
-    cards = ((452, 34, -1.1), (492, 150, 0.9), (446, 266, -0.7), (486, 382, 1.2))
-    cw, ch = 390, 100
-    pins = [(x + cw / 2 + (16 if i % 2 else -22), y + 12) for i, (x, y, _) in enumerate(cards)]
-    string = f"M250 138 Q360 60 {pins[0][0]:.0f} {pins[0][1]:.0f}"
+    cards = ((452, 22, -1.1), (492, 145, 0.9), (446, 268, -0.7), (486, 391, 1.2))
+    cw, ch = 390, 112
+    # Pins sit right of centre, clear of the name in each card's header.
+    pins = [(x + cw / 2 + (60 if i % 2 else 30), y + 12) for i, (x, y, _) in enumerate(cards)]
+    string = f"M250 138 Q360 56 {pins[0][0]:.0f} {pins[0][1]:.0f}"
     for (ax, ay), (bx, by) in zip(pins, pins[1:]):
         string += f" Q{(ax + bx) / 2 + 26:.0f} {(ay + by) / 2 + 8:.0f} {bx:.0f} {by:.0f}"
     out = []
-    for index, ((x, y, tilt), (name, runtime, stages)) in enumerate(zip(cards, SYSTEMS)):
+    for index, ((x, y, tilt), system) in enumerate(zip(cards, SYSTEMS)):
+        codename, name, runtime, does, stages = system
+        pipeline = " > ".join(stages)
+        assert len(does) <= LINE_LIMIT and len(pipeline) <= LINE_LIMIT, (codename, len(does), len(pipeline))
         out.append(f'<g transform="rotate({tilt} {x + cw / 2} {y + ch / 2})">')
         out.append(f'<rect x="{x}" y="{y}" width="{cw}" height="{ch}" fill="url(#index-card)" '
                    f'stroke="#332c25" filter="url(#shadow)"/>')
         out.append(f'<path d="M{x} {y + 30}H{x + cw}" stroke="{RED_DEEP}"/>')
         out.append(f'<text x="{x + 16}" y="{y + 21}" font-size="10.5" letter-spacing="2" '
-                   f'fill="{RED}">CASE {index + 1:02d}</text>')
+                   f'fill="{RED}">CASE {index + 1:02d}<tspan fill="{ASH}" letter-spacing="1">   {esc(name)}</tspan></text>')
         out.append(f'<text x="{x + cw - 16}" y="{y + 21}" font-size="9.5" letter-spacing="1.6" '
                    f'text-anchor="end" fill="{DIM}">{runtime}</text>')
-        out.append(f'<text x="{x + 16}" y="{y + 57}" font-size="18" font-weight="700" '
-                   f'letter-spacing="1.6" fill="{BONE}">{esc(name.upper().replace("-", " "))}</text>')
-        out.append(f'<text x="{x + 16}" y="{y + 82}" font-size="11.5" fill="{ASH}">'
-                   f'{esc(" > ".join(stages))}</text>')
+        out.append(f'<text x="{x + 16}" y="{y + 56}" font-size="19" font-weight="700" '
+                   f'letter-spacing="1.8" fill="{BONE}">{esc(codename)}</text>')
+        out.append(f'<text x="{x + 16}" y="{y + 79}" font-size="11.5" fill="#d3ccc2">{esc(does)}</text>')
+        out.append(f'<text x="{x + 16}" y="{y + 98}" font-size="10.5" letter-spacing="0.3" '
+                   f'fill="{ASH}">{esc(pipeline)}</text>')
         out.append(
             f'<g class="stamp" style="animation-delay:{1.6 + index * 0.25}s">'
-            f'<g transform="rotate(-9 {x + cw - 62} {y + 52})" opacity="0.85" filter="url(#rough)">'
-            f'<rect x="{x + cw - 112}" y="{y + 39}" width="98" height="24" fill="none" '
+            f'<g transform="rotate(-9 {x + cw - 62} {y + 48})" opacity="0.85" filter="url(#rough)">'
+            f'<rect x="{x + cw - 112}" y="{y + 36}" width="98" height="24" fill="none" '
             f'stroke="{RED}" stroke-width="2"/>'
-            f'<text x="{x + cw - 63}" y="{y + 56}" font-family="{SANS}" font-size="12.5" '
+            f'<text x="{x + cw - 63}" y="{y + 53}" font-family="{SANS}" font-size="12.5" '
             f'font-weight="800" letter-spacing="2.5" text-anchor="middle" fill="{RED}">DEPLOYED</text>'
             f'</g></g>')
         out.append("</g>")
@@ -238,22 +296,6 @@ def case_cards():
         out.append(f'<circle cx="{px:.0f}" cy="{py + 1.5:.0f}" r="5.5" fill="#000" opacity="0.6"/>')
         out.append(f'<circle cx="{px:.0f}" cy="{py:.0f}" r="5" fill="{RED}"/>'
                    f'<circle cx="{px - 1.5:.0f}" cy="{py - 1.5:.0f}" r="1.6" fill="#ff9aa5"/>')
-    return out
-
-
-def bats():
-    """A small flock that crosses on load, then again every BAT_CYCLE seconds.
-
-    Each bat is hidden until its own animation starts and between passes, so a
-    viewer that does not animate sees the board without them.
-    """
-    out = ['<g class="bats">']
-    for index in range(len(BATS)):
-        # Wings level, head up: the silhouette everyone reads as a bat. The bob
-        # animation banks it a few degrees either way as it crosses.
-        out.append(f'<g class="fly{index}" opacity="0"><g class="bob{index}">'
-                   f'<g transform="scale(1.5)">{BAT}</g></g></g>')
-    out.append("</g>")
     return out
 
 
@@ -273,7 +315,7 @@ def build():
     out += journal() + case_cards()
     out.append(f'<rect class="rain" x="-40" y="-120" width="{W + 80}" height="{H + 240}" '
                f'fill="url(#rain)"/>')
-    out += bats()
+    out += BAT_SVG
     out.append("</g>")
     out.append(f'<path d="{frame}" fill="none" stroke="#2a2420" stroke-width="1.5"/>')
     out.append("</svg>")
