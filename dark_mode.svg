@@ -473,7 +473,7 @@ animation: reveal 2.6s steps(52) 0.25s backwards;}
 <tspan x="318" y="310" class="cc">. </tspan><tspan class="key">Rating</tspan>:<tspan class="cc" id="rating_data_dots"> .... </tspan><tspan class="value" id="rating_data">4.6</tspan> | <tspan class="key">Ratings</tspan>:<tspan class="cc" id="reviews_data_dots"> ........................... </tspan><tspan class="value" id="reviews_data">2,660</tspan>
 <tspan x="318" y="340" class="cc">. </tspan><tspan class="key">Downloads (90d)</tspan>:                                      <tspan class="addColor" id="trend_data">+48,581</tspan>
 <tspan x="318" y="400">GitHub</tspan> ────────────────────────────────────────────────────────
-<tspan x="318" y="430" class="cc">. </tspan><tspan class="key">Contributions (1y)</tspan>:<tspan class="cc" id="contribution_data_dots"> ..................................... </tspan><tspan class="value" id="contribution_data">660</tspan>
+<tspan x="318" y="430" class="cc">. </tspan><tspan class="key">Contributions (1y)</tspan>:<tspan class="cc" id="contribution_data_dots"> ..................................... </tspan><tspan class="value" id="contribution_data">662</tspan>
 <tspan x="318" y="460" class="cc">. </tspan><tspan class="key">Repositories contributed to</tspan>:<tspan class="cc" id="repositories_data_dots"> ............................. </tspan><tspan class="value" id="repositories_data">11</tspan>
 </text>
 </svg>
